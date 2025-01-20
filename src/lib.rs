@@ -540,6 +540,7 @@ pub fn serialize_repo(
     config: Option<YekConfig>,
     output_dir: Option<&Path>,
     _max_files: Option<usize>,
+    line_number: bool,
 ) -> Result<Option<PathBuf>> {
     let base_path = base_path.unwrap_or_else(|| Path::new("."));
     let final_config = build_final_config(config.clone());
@@ -757,6 +758,7 @@ pub fn serialize_repo(
             &final_config.ignore_patterns,
             &final_config.priority_list,
             recentness_boost.as_ref(),
+            line_number,
         )?;
         Ok(Some(out_dir))
     } else {

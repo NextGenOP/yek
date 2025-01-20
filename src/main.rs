@@ -51,6 +51,12 @@ fn main() -> Result<()> {
                 .action(ArgAction::SetTrue),
         )
         .arg(
+            Arg::new("line-number")
+                .long("line-number")
+                .help("Show line number in output")
+                .action(ArgAction::SetTrue),
+        )
+        .arg(
             Arg::new("debug")
                 .long("debug")
                 .help("Enable debug output")
@@ -113,6 +119,7 @@ fn main() -> Result<()> {
             config,
             output_dir.as_deref(),
             None,
+            matches.get_flag("line-number"),
         )? {
             info!("Output written to {}", output_path.display());
         }

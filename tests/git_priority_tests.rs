@@ -126,6 +126,7 @@ fn test_git_priority_boost() -> Result<(), Box<dyn std::error::Error>> {
         None,
         Some(&output_dir),
         None,
+        false,
     )?;
 
     assert!(result.is_some(), "Should have output directory");
@@ -169,6 +170,7 @@ fn test_no_git_fallback() {
         None,  // no config
         None,  // no output dir override
         None,  // no path prefix
+        false,
     );
     assert!(result.is_ok(), "Should succeed even without git");
 }
@@ -230,6 +232,7 @@ fn test_git_priority_with_config() -> Result<(), Box<dyn std::error::Error>> {
         Some(config),
         Some(&output_dir),
         None,
+        false,
     )?;
 
     assert!(result.is_some(), "Should have output directory");
@@ -304,6 +307,7 @@ fn test_git_priority_with_untracked_files() -> Result<(), Box<dyn std::error::Er
         None,
         None,
         None,
+        false,
     )?;
 
     Ok(())
@@ -347,6 +351,7 @@ fn test_git_priority_with_deleted_files() -> Result<(), Box<dyn std::error::Erro
         None,
         None,
         None,
+        false,
     )?;
 
     Ok(())
@@ -481,6 +486,7 @@ fn test_git_priority_boost_with_path_prefix() -> Result<(), Box<dyn std::error::
         Some(config),
         Some(&output_dir),
         None,
+        false,
     )?;
 
     assert!(result.is_some(), "Should have output directory");

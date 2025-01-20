@@ -61,6 +61,7 @@ fn test_serialization_performance() -> Result<(), Box<dyn std::error::Error>> {
                 None,
                 Some(output_dir.path()),
                 None,
+                false,
             )?;
             // Clean output directory between runs
             for entry in fs::read_dir(output_dir.path())? {
@@ -85,6 +86,7 @@ fn test_serialization_performance() -> Result<(), Box<dyn std::error::Error>> {
                 None,
                 Some(output_dir.path()),
                 None,
+                false,
             )?;
             let duration = start.elapsed();
             stats.update(duration);

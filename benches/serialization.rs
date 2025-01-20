@@ -64,6 +64,7 @@ fn single_small_file_byte_mode(c: &mut Criterion) {
                 None,
                 Some(&output_dir),
                 None,
+                false,
             )
             .unwrap();
             fs::remove_dir_all(&output_dir).ok();
@@ -92,6 +93,7 @@ fn single_large_file_byte_mode(c: &mut Criterion) {
                 None,
                 Some(&output_dir),
                 None,
+                false,
             )
             .unwrap();
             fs::remove_dir_all(&output_dir).ok();
@@ -120,6 +122,7 @@ fn single_large_file_token_mode(c: &mut Criterion) {
                 None,
                 Some(&output_dir),
                 None,
+                false,
             )
             .unwrap();
             fs::remove_dir_all(&output_dir).ok();
@@ -149,6 +152,7 @@ fn multiple_small_files(c: &mut Criterion) {
                     None,
                     Some(&output_dir),
                     None,
+                    false,
                 )
                 .unwrap();
                 fs::remove_dir_all(&output_dir).ok();
@@ -183,6 +187,7 @@ fn multiple_medium_files(c: &mut Criterion) {
                     None,
                     Some(&output_dir),
                     None,
+                    false,
                 )
                 .unwrap();
                 fs::remove_dir_all(&output_dir).ok();
@@ -214,6 +219,7 @@ fn multiple_large_files(c: &mut Criterion) {
                     None,
                     Some(&output_dir),
                     None,
+                    false,
                 )
                 .unwrap();
                 fs::remove_dir_all(&output_dir).ok();
@@ -245,6 +251,7 @@ fn multiple_token_files(c: &mut Criterion) {
                     None,
                     Some(&output_dir),
                     None,
+                    false,
                 )
                 .unwrap();
                 fs::remove_dir_all(&output_dir).ok();
@@ -286,6 +293,7 @@ fn custom_config_test(c: &mut Criterion) {
                     Some(config.clone()),
                     Some(&output_dir),
                     None,
+                    false,
                 )
                 .unwrap();
                 fs::remove_dir_all(&output_dir).ok();

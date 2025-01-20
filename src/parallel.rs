@@ -28,6 +28,7 @@ pub struct FileChunk {
     pub part_index: usize,
     pub rel_path: String,
     pub content: String,
+    pub start_line: usize,
 }
 
 /// File entry with priority for sorting
@@ -50,6 +51,7 @@ pub fn process_files_parallel(
     ignore_patterns: &[Regex],
     priority_list: &[PriorityPattern],
     recentness_boost: Option<&HashMap<String, i32>>,
+    line_number: bool,
 ) -> Result<()> {
     fs::create_dir_all(output_dir)?;
 
@@ -121,7 +123,7 @@ pub fn process_files_parallel(
 
     // Spawn aggregator thread
     let output_dir = output_dir.to_path_buf();
-    let aggregator_handle = thread::spawn(move || aggregator_loop(rx, output_dir, max_size));
+    let aggregator_handle = thread::spawn(move || aggregator_loop(rx, output_dir, max_size, line_number));
 
     // Spawn worker threads - use fewer threads for smaller workloads
     let num_threads = if files.len() < 4 { 1 } else { get() };
@@ -135,7 +137,7 @@ pub fn process_files_parallel(
 
         let handle = thread::spawn(move || -> Result<()> {
             for file_entry in chunk_files {
-                read_and_send_chunks(&base_path, file_entry, max_size, &sender)?;
+                read_and_send_chunks(&base_path, file_entry, max_size, &sender, line_number)?;
             }
             Ok(())
         });
@@ -162,6 +164,7 @@ fn read_and_send_chunks(
     file_entry: FileEntry,
     _max_size: usize,
     tx: &Sender<FileChunk>,
+    line_number: bool, // Added line_numbers flag
 ) -> Result<()> {
     let mut file = fs::File::open(&file_entry.path)?;
     let rel_str = normalize_path(base_path, &file_entry.path);
@@ -183,6 +186,7 @@ fn read_and_send_chunks(
             part_index: 0,
             rel_path: rel_str.to_string(),
             content: chunk_content,
+            start_line: if line_numbers { 1 } else { 0 }, // Added line number information based on flag
         };
         tx.send(fc)?;
         return Ok(());
@@ -191,24 +195,30 @@ fn read_and_send_chunks(
     // Otherwise break into multiple parts using CHUNK_SIZE_BYTES
     let mut start = 0;
     let mut part_index = 0;
+    let mut start_line = 1; // Added line number information
     while start < total_buf.len() {
         let end = (start + CHUNK_SIZE_BYTES).min(total_buf.len());
         let slice = &total_buf[start..end];
         let chunk_str = String::from_utf8_lossy(slice).to_string();
-
         let fc = FileChunk {
             priority: file_entry.priority,
             file_index: file_entry.file_index,
             part_index,
             rel_path: format!("{}:part{}", rel_str, part_index),
             content: chunk_str,
+            start_line: if line_numbers { start_line } else { 0 }, // Added line number information based on flag
         };
         tx.send(fc)?;
         start = end;
         part_index += 1;
+        if line_numbers {
+            start_line += fc.content.lines().count(); // Update line number for next chunk based on flag
+        }
     }
     Ok(())
 }
+
+
 
 /// Collects files from directory respecting .gitignore and sorts by priority
 fn collect_files(
@@ -298,7 +308,7 @@ fn collect_files(
 }
 
 /// Receives chunks from workers and writes them to files
-fn aggregator_loop(rx: Receiver<FileChunk>, output_dir: PathBuf, max_size: usize) -> Result<()> {
+fn aggregator_loop(rx: Receiver<FileChunk>, output_dir: PathBuf, max_size: usize, line_number: bool) -> Result<()> {
     // Collect chunks first to maintain priority order
     let mut all_chunks = Vec::new();
     while let Ok(chunk) = rx.recv() {
@@ -320,7 +330,16 @@ fn aggregator_loop(rx: Receiver<FileChunk>, output_dir: PathBuf, max_size: usize
 
     // Process chunks in sorted order
     for chunk in all_chunks {
-        let chunk_str = format!(">>>> {}\n{}\n\n", chunk.rel_path, chunk.content);
+        let chunk_str = if line_numbers {
+            let mut lines = String::new();
+            for (i, line) in chunk.content.lines().enumerate() {
+                lines.push_str(&format!("{} {}\n", chunk.start_line + i, line));
+            }
+            format!(">>>> {}:{}-{}\n{}\n\n", chunk.rel_path, chunk.start_line, chunk.start_line + chunk.content.lines().count() - 1, lines)
+        } else {
+            format!(">>>> {}\n{}\n\n", chunk.rel_path, chunk.content)
+        };
+        
         let chunk_size = chunk_str.len();
 
         // Check priority first to avoid unnecessary size checks
